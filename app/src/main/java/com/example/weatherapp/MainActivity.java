@@ -1,5 +1,6 @@
 package com.example.weatherapp;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -7,9 +8,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.ImageView;
@@ -37,7 +43,9 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.squareup.picasso.Picasso;
 
+import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicMarkableReference;
 
 import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -57,19 +65,33 @@ public class MainActivity extends AppCompatActivity {
     TextView txt_city_name, txt_humidity, txt_sunrise, txt_sunset, txt_pressure, txt_temperature, txt_date_time, txt_wind, txt_summary, txt_description;
     LinearLayout weather_panel;
     ProgressBar loading;
-    String description;
+    public String description;
 
     RecyclerView recycler_forecast;
 
     CompositeDisposable compositeDisposable, compositeDisposable1;
     IOpenWeatherMap mService, mService1;
 
+    TomorrowWeather tomorrowWeather;
+
+
+
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         swiperefresh=(SwipeRefreshLayout)findViewById(R.id.swiperefresh);
+
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, 8);
+        c.set(Calendar.AM_PM, 1);
+        c.set(Calendar.MINUTE, 2);
+        c.set(Calendar.SECOND, 0);
+
+        startAlarm(c);
 
         //Request permission
         Dexter.withActivity(this).withPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).withListener(new MultiplePermissionsListener() {
@@ -106,12 +128,25 @@ public class MainActivity extends AppCompatActivity {
         }).check();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    private void startAlarm(Calendar c) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, AlertReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, 0);
+        if (c.before(Calendar.getInstance())) {
+            c.add(Calendar.DATE, 1);
+        }
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(),pendingIntent);
+
+
+    }
+
 
     private void buildLocationRequest() {
         locationRequest= new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(3000);
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(8000);
         locationRequest.setSmallestDisplacement(10.0f);
     }
 
@@ -124,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Common.current_location = locationResult.getLastLocation();
 
+                //tomorrowWeather=new TomorrowWeather();
                 todayWeather();
                 forecastWeather();
             }
@@ -176,9 +212,10 @@ public class MainActivity extends AppCompatActivity {
                 txt_humidity.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getHumidity())).append("%").toString());
                 txt_sunrise.setText(Common.convertUnixToHour(weatherResult.getSys().getSunrise()));
                 txt_sunset.setText(Common.convertUnixToHour(weatherResult.getSys().getSunset()));
-                txt_wind.setText(new StringBuilder(String.valueOf(weatherResult.getWind().getSpeed())).append((" km/h")));
+                txt_wind.setText(new StringBuilder(String.valueOf((int)(weatherResult.getWind().getSpeed()*3.6))).append((" km/h")));
                 txt_summary.setText("Čini se kao " + new StringBuilder(String.valueOf((int)weatherResult.getMain().getFeels_like())).append("°C").toString());
 
+                //description=tomorrowWeather.description;
                 description = new StringBuilder(String.valueOf(weatherResult.getWeather().get(0).getDescription())).toString();
                 description = description.substring(0, 1).toUpperCase() + description.substring(1);
                 txt_description.setText(description);

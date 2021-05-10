@@ -10,6 +10,7 @@ public class Common {
     public static final String APP_ID = "edb0f53c276903c965219072751b7107";
     public static Location current_location = null;
     public static final String lang = "hr";
+    public static final String exclude = "current,minutely,hourly,alerts";
 
     public static String convertUnixToDateTime(long dt) {
         Date date= new Date(dt*1000L);
