@@ -24,10 +24,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.evernote.android.job.JobCreator;
+import com.evernote.android.job.JobManager;
 import com.example.weatherapp.Adapter.WeatherForecastAdapter;
 import com.example.weatherapp.Common.Common;
 import com.example.weatherapp.Model.WeatherForecastResult;
 import com.example.weatherapp.Model.WeatherResult;
+import com.example.weatherapp.Model.WeatherTomorrowResult;
 import com.example.weatherapp.Retrofit.IOpenWeatherMap;
 import com.example.weatherapp.Retrofit.RetrofitClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -62,19 +65,17 @@ public class MainActivity extends AppCompatActivity {
     SwipeRefreshLayout swiperefresh;
 
     ImageView img_weather;
-    TextView txt_city_name, txt_humidity, txt_sunrise, txt_sunset, txt_pressure, txt_temperature, txt_date_time, txt_wind, txt_summary, txt_description;
+    TextView txt_city_name, txt_humidity, txt_sunrise, txt_sunset, txt_pressure, txt_temperature, txt_date_time, txt_wind, txt_summary, txt_description, txt_proba;
     LinearLayout weather_panel;
     ProgressBar loading;
-    public String description;
+    public String description, description1;
 
     RecyclerView recycler_forecast;
 
-    CompositeDisposable compositeDisposable, compositeDisposable1;
-    IOpenWeatherMap mService, mService1;
+    CompositeDisposable compositeDisposable, compositeDisposable1, compositeDisposable2;
+    IOpenWeatherMap mService, mService1, mService2;
 
     TomorrowWeather tomorrowWeather;
-
-
 
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -88,10 +89,14 @@ public class MainActivity extends AppCompatActivity {
         Calendar c = Calendar.getInstance();
         c.set(Calendar.HOUR_OF_DAY, 8);
         c.set(Calendar.AM_PM, 1);
-        c.set(Calendar.MINUTE, 2);
+        c.set(Calendar.MINUTE, 34);
         c.set(Calendar.SECOND, 0);
 
         startAlarm(c);
+
+
+
+
 
         //Request permission
         Dexter.withActivity(this).withPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).withListener(new MultiplePermissionsListener() {
@@ -159,13 +164,16 @@ public class MainActivity extends AppCompatActivity {
 
                 Common.current_location = locationResult.getLastLocation();
 
-                //tomorrowWeather=new TomorrowWeather();
                 todayWeather();
                 forecastWeather();
+
+
+
             }
         };
 
     }
+
 
 
     private void todayWeather() {
@@ -215,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
                 txt_wind.setText(new StringBuilder(String.valueOf((int)(weatherResult.getWind().getSpeed()*3.6))).append((" km/h")));
                 txt_summary.setText("Čini se kao " + new StringBuilder(String.valueOf((int)weatherResult.getMain().getFeels_like())).append("°C").toString());
 
-                //description=tomorrowWeather.description;
                 description = new StringBuilder(String.valueOf(weatherResult.getWeather().get(0).getDescription())).toString();
                 description = description.substring(0, 1).toUpperCase() + description.substring(1);
                 txt_description.setText(description);

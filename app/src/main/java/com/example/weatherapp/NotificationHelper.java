@@ -68,7 +68,7 @@ public class NotificationHelper extends ContextWrapper {
         tomorrowWeather = new TomorrowWeather();
         return new NotificationCompat.Builder(getApplicationContext(), channelID)
                         .setContentTitle("Vrijeme sutra")
-                        .setContentText(description)
+                        .setContentText(tomorrowWeather.description)
                         .setSmallIcon(R.drawable.ic_launcher_foreground);
 
     }
